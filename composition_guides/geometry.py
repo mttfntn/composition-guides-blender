@@ -25,6 +25,7 @@ _EPS = 1e-9
 # ---------------------------------------------------------------------------
 
 def _normalize(segs, w, h):
+    """Frame units (w x h) -> normalized 0..1 coordinates."""
     return [((x1 / w, y1 / h), (x2 / w, y2 / h)) for (x1, y1), (x2, y2) in segs]
 
 
@@ -84,19 +85,23 @@ def _reciprocals(w, h):
 
 
 def _diagonals(w, h):
+    """Both corner-to-corner diagonals, in frame units."""
     bl, br, tr, tl = _corners(w, h)
     return [(bl, tr), (tl, br)]
 
 
 def _vlines(xs):
+    """Full-height vertical lines at normalized x positions."""
     return [((x, 0.0), (x, 1.0)) for x in xs]
 
 
 def _hlines(ys):
+    """Full-width horizontal lines at normalized y positions."""
     return [((0.0, y), (1.0, y)) for y in ys]
 
 
 def _dedup(values, tol=1e-6):
+    """Drop values within `tol` of one already kept (keeps order)."""
     out = []
     for v in values:
         if all(abs(v - o) > tol for o in out):
@@ -113,6 +118,7 @@ def remap(segs, rect):
 
 
 def rect_outline(rect):
+    """The four edges of the normalized rectangle (u0, v0, u1, v1)."""
     u0, v0, u1, v1 = rect
     return [((u0, v0), (u1, v0)), ((u1, v0), (u1, v1)),
             ((u1, v1), (u0, v1)), ((u0, v1), (u0, v0))]
@@ -123,16 +129,19 @@ def rect_outline(rect):
 # ---------------------------------------------------------------------------
 
 def rule_of_thirds(aspect):
+    """Two vertical and two horizontal lines at 1/3 and 2/3."""
     t = (1.0 / 3.0, 2.0 / 3.0)
     return _vlines(t) + _hlines(t)
 
 
 def phi_grid(aspect):
+    """Like the rule of thirds, but at the golden ratio (0.382 / 0.618)."""
     t = (INV_PHI2, INV_PHI)
     return _vlines(t) + _hlines(t)
 
 
 def custom_grid(aspect, cols, rows):
+    """Evenly spaced grid with `cols` columns and `rows` rows."""
     xs = [i / cols for i in range(1, cols)]
     ys = [i / rows for i in range(1, rows)]
     return _vlines(xs) + _hlines(ys)
@@ -249,14 +258,20 @@ def golden_rectangles(aspect, turns=10, orient='AUTO', flip_h=False, flip_v=Fals
 # ---------------------------------------------------------------------------
 
 def baroque_diagonal(aspect):
+    """Bottom-left to top-right diagonal."""
     return [((0.0, 0.0), (1.0, 1.0))]
 
 
 def sinister_diagonal(aspect):
+    """Top-left to bottom-right diagonal."""
     return [((0.0, 1.0), (1.0, 0.0))]
 
 
 def dynamic_symmetry(aspect, reciprocals=True, edge_lines=True, eye_lines=False):
+    """
+    Hambidge armature: both diagonals plus the reciprocals, with optional
+    vertical/horizontal lines through the reciprocal edge hits and the eyes.
+    """
     w, h = aspect, 1.0
     bl, br, tr, tl = _corners(w, h)
     segs = _diagonals(w, h)
@@ -289,6 +304,7 @@ def dynamic_symmetry(aspect, reciprocals=True, edge_lines=True, eye_lines=False)
 
 
 def harmonic_armature(aspect, reciprocals=True, rhombus=True):
+    """Both diagonals, optional reciprocals and the rhombus joining the side midpoints."""
     w, h = aspect, 1.0
     segs = _diagonals(w, h)
     if reciprocals:
@@ -314,6 +330,7 @@ def diagonal_method(aspect):
 # ---------------------------------------------------------------------------
 
 def center_cross(aspect, size=0.03, full=False):
+    """Small cross at the centre (`size` of the short side), or full-frame crosshair."""
     if full:
         return _vlines((0.5,)) + _hlines((0.5,))
     w, h = aspect, 1.0
@@ -324,6 +341,7 @@ def center_cross(aspect, size=0.03, full=False):
 
 
 def corner_marks(aspect, size=0.05):
+    """L-shaped brackets on the four corners, `size` of the short side long."""
     w, h = aspect, 1.0
     r = size * min(w, h)
     segs = []

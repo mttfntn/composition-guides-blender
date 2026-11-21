@@ -1,4 +1,11 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
+"""
+User interface: sidebar panels (N > Composition), the viewport header button
+and popover, the two operators, and the add-on preferences.
+
+Operator and panel classes use # comments instead of docstrings, because
+Blender shows class docstrings to users as tooltips.
+"""
 
 import bpy
 from bpy.props import BoolProperty
@@ -29,6 +36,7 @@ def _guide_row(layout, s, gid):
 
 
 def _indent(col):
+    """Indented sub-column for a guide's options."""
     split = col.split(factor=0.08)
     split.label(text="")
     return split.column(align=True)
@@ -38,6 +46,7 @@ def _indent(col):
 # Operators
 # ---------------------------------------------------------------------------
 
+# Makes the guide camera the scene camera and looks through it.
 class VIEW3D_OT_composition_guides_view_camera(Operator):
     bl_idname = "view3d.composition_guides_view_camera"
     bl_label = "Look Through Camera"
@@ -61,6 +70,7 @@ class VIEW3D_OT_composition_guides_view_camera(Operator):
         return {'FINISHED'}
 
 
+# "All On" skips the framing guides (safe areas, crop); "All Off" clears everything.
 class VIEW3D_OT_composition_guides_all(Operator):
     bl_idname = "view3d.composition_guides_all"
     bl_label = "Set All Guides"
@@ -261,6 +271,7 @@ class VIEW3D_PT_composition_guides_popover(Panel):
 
 
 def draw_header_button(self, context):
+    """Appended to the 3D viewport header: master toggle + popover."""
     prefs = _prefs(context)
     if prefs is not None and not prefs.show_header_button:
         return

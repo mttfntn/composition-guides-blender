@@ -1,4 +1,11 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
+"""
+Add-on settings, stored per scene as ``scene.composition_guides``.
+
+GUIDES is the single list of guides: it generates one ``show_<id>`` toggle and
+one ``color_<id>`` color per guide, and ui.py / draw.py read the same ids.
+Every property redraws the 3D viewports when it changes.
+"""
 
 import bpy
 from bpy.props import (
@@ -53,6 +60,7 @@ SPIRAL_ORIENT = (
 
 
 def tag_redraw_all(context=None):
+    """Ask every 3D viewport in every window to redraw."""
     wm = (context or bpy.context).window_manager
     if wm is None:
         return
