@@ -57,6 +57,6 @@ Windows Blender: `C:\Program Files\Blender Foundation\Blender 5.3\blender.exe`.
 
 ## Git and CI
 - Single branch `main`, remote `origin`. Small commits, clear messages.
-- `tests.yml` runs on push to main, PRs, manual runs and `workflow_call` (reused by `release.yml`). It downloads Blender 5.3.0 via `.github/scripts/get-blender.sh`, which tries the official server and mirrors, retries, and checks SHA-256. Only the tarball is cached. Artifacts are kept 3 days.
+- `tests.yml` runs on push to main, PRs, manual runs and `workflow_call` (reused by `release.yml`). It downloads Blender 5.3.0 via `.github/scripts/get-blender.sh`, which tries the official server and mirrors, retries, and checks SHA-256. Only the tarball is cached. No workflow artifacts are uploaded (the account artifact quota was full; the zip ships only as a release asset).
 - `release.yml` fetches the tag object explicitly (checkout only gets the commit), checks tag = manifest version, uses the tag message as notes, and runs `gh release create`.
 - `dist/` and `*.zip` are gitignored. The package is shipped only as a release asset.

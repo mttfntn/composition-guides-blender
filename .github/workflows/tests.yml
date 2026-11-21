@@ -39,14 +39,10 @@ jobs:
       - name: Blender tests
         run: ~/blender/blender --background --factory-startup --python tests/test_blender.py
 
+      # Build only to validate. The zip ships as a release asset (release.yml),
+      # not as a workflow artifact, so CI uses no artifact storage.
       - name: Build and validate package
         run: |
           python3 build.py
           ~/blender/blender --factory-startup --command extension validate dist/*.zip
 
-      - name: Upload package
-        uses: actions/upload-artifact@v4
-        with:
-          name: composition_guides
-          path: dist/*.zip
-          retention-days: 3

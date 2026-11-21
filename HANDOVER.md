@@ -103,7 +103,7 @@ None: this project is not a fork.
 - New property defaults only apply to new scenes and files. Saved .blend files keep the values they stored.
 - Blender remembers panels a user opened or closed, so `DEFAULT_CLOSED` only affects the first time a panel is shown.
 - `properties.py` builds the PropertyGroup with `type()` so the generated per-guide annotations are reliable.
-- CI caches only the Blender tarball (about 400 MB) and keeps build artifacts for 3 days.
+- CI caches only the Blender tarball (about 400 MB) and uploads no workflow artifacts. The zip is published only as a release asset. Your account artifact quota was full in Nov 2026, which is why the upload step was removed.
 
 ## Known limits
 - Viewport only: the guides are not rendered into images.
