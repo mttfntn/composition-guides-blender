@@ -1,5 +1,11 @@
 # Composition Guides for Blender
 
+[![Blender](https://img.shields.io/badge/Blender-5.3-E87D0D?logo=blender&logoColor=white)](https://www.blender.org/download/)
+[![Release](https://img.shields.io/badge/release-v1.0.0-blue)](https://github.com/mttfntn/composition-guides-blender/releases/latest)
+[![Tests](https://github.com/mttfntn/composition-guides-blender/actions/workflows/tests.yml/badge.svg)](https://github.com/mttfntn/composition-guides-blender/actions/workflows/tests.yml)
+[![License](https://img.shields.io/badge/license-GPL--3.0--or--later-green)](LICENSE)
+[![Python](https://img.shields.io/badge/language-Python-3776AB?logo=python&logoColor=white)](composition_guides)
+
 Composition guides fitted to your camera frame, shown in the 3D viewport and switched on and off from a panel.
 
 The guides are drawn as a viewport overlay, so they work with **every render engine** (Eevee, Cycles, Workbench, Octane, Redshift, ...) and in every shading mode, Rendered included. They never appear in your final renders.
@@ -12,13 +18,15 @@ They follow the camera frame exactly:
 
 So they always line up with the camera border (passepartout).
 
-## Installation
-1. Download `composition_guides.zip` from this repository.
-2. In Blender, open **Edit › Preferences › Add-ons**, or **Get Extensions** on 4.2+.
-3. Open the **▾** menu at the top right, choose **Install from Disk…** and pick the zip.
-4. Enable **Composition Guides**.
+**Requires Blender 5.3.** No other version is supported.
 
-Works with Blender **3.6 and newer**, including OctaneBlender. Tested on Blender 5.2 and OctaneBlender 4.5 with the Octane engine.
+## Installation
+1. Download `composition_guides-<version>.zip` from the [latest release](https://github.com/mttfntn/composition-guides-blender/releases/latest).
+2. In Blender, open **Edit › Preferences › Get Extensions**.
+3. Open the **▾** menu at the top right, choose **Install from Disk…** and pick the zip.
+4. The add-on is enabled automatically. If not, enable it under **Add-ons**.
+
+To update, install the new zip the same way. It replaces the old version.
 
 ## Usage
 1. Press **N** in the 3D viewport and open the **Composition** tab. You can also use the grid button in the viewport header for quick toggles.
@@ -61,23 +69,18 @@ Angles are computed in real frame proportions, so perpendiculars and 45° lines 
 - **Outside Camera View**: also draw the guides on the camera frame in the normal perspective view.
 - **Shadow**: a dark outline under the lines so they stay readable over bright images.
 
-Settings are saved in the .blend file. A header button can be turned off in the add-on preferences.
+Settings are saved in the .blend file. The header button can be turned off in the add-on preferences.
 
-## Development
-```
-composition_guides/
-  __init__.py            add-on entry (bl_info for 3.6–4.1)
-  blender_manifest.toml  extension manifest (4.2+)
-  properties.py          settings stored on the scene
-  geometry.py            pure-math guide generators (no bpy)
-  draw.py                camera-frame projection and GPU drawing
-  ui.py                  sidebar panels, header popover, operators
-tests/test_geometry.py   math checks
-build.py                 builds composition_guides.zip
-```
+## For developers
+- [HANDOVER.md](HANDOVER.md): how the project works, how to change, test and release it.
+- [AGENTS.md](AGENTS.md): the same, compact, for AI coding assistants.
 
-- `python tests/test_geometry.py` runs the math checks without Blender.
-- `python build.py` rebuilds the installable zip.
+Quick commands:
+```
+python tests/test_geometry.py
+blender --background --factory-startup --python tests/test_blender.py
+python build.py
+```
 
 ## License
-GPL-3.0-or-later
+[GPL-3.0-or-later](LICENSE), © Matteo Fontana.
