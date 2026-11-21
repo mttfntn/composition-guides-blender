@@ -24,40 +24,22 @@ _shaders = {}
 _SHADOW = (0.0, 0.0, 0.0)
 
 
-def _builtin_shader(key, *names):
-    """First available built-in shader from names (names changed in Blender 4.0)."""
-    if key not in _shaders:
-        shader, used = None, None
-        for name in names:
-            try:
-                shader, used = gpu.shader.from_builtin(name), name
-                break
-            except (ValueError, TypeError, SystemError):
-                continue
-        _shaders[key] = shader
-        _shaders[key + "_name"] = used
-    return _shaders[key]
-
-
-def _line_shader():
-    return _builtin_shader("line", "POLYLINE_UNIFORM_COLOR", "3D_POLYLINE_UNIFORM_COLOR")
-
-
-def _flat_shader():
-    return _builtin_shader("flat", "UNIFORM_COLOR", "2D_UNIFORM_COLOR")
-
-
-def _flat_is_2d():
-    # Blender < 4.0 only has the 2D_ variant, which takes 2D positions.
-    _flat_shader()
-    return _shaders.get("flat_name") == "2D_UNIFORM_COLOR"
+def _shader(name):
+    """Built-in GPU shader, created on first use (needs a GPU context)."""
+    if name not in _shaders:
+        _shaders[name] = gpu.shader.from_builtin(name)
+    return _shaders[name]
 
 
 def _guide_camera(context, settings):
+    """
+    Camera the guides follow: the panel's camera override, else the
+    viewport's local camera (if it uses one), else the scene camera.
+    """
     if settings.camera is not None and settings.camera.type == 'CAMERA':
         return settings.camera
     space = context.space_data
-    if space is not None and getattr(space, "use_local_camera", False) and space.camera:
+    if space is not None and space.use_local_camera and space.camera:
         cam = space.camera
     else:
         cam = context.scene.camera
@@ -67,7 +49,13 @@ def _guide_camera(context, settings):
 
 
 class _FrameProjector:
-    """Maps normalized frame coordinates (u, v) to region pixels."""
+    """
+    Maps normalized frame coordinates (u, v) to region pixels.
+
+    (u, v) is turned into a point on the camera's view frame rectangle in
+    camera space, then projected with the viewport matrix. Projecting real
+    3D points keeps the result exact both in camera view and outside it.
+    """
 
     def __init__(self, scene, cam, region, rv3d):
         frame = cam.data.view_frame(scene=scene)
@@ -82,10 +70,12 @@ class _FrameProjector:
 
     @property
     def aspect(self):
+        """Frame width / height as seen by the camera (pixel aspect included)."""
         h = self.y1 - self.y0
         return (self.x1 - self.x0) / h if h > 0.0 else 1.0
 
     def point(self, u, v):
+        """Pixel position of (u, v), or None when it lies behind the viewer."""
         x = self.x0 + (self.x1 - self.x0) * u
         y = self.y0 + (self.y1 - self.y0) * v
         co = self.matrix @ Vector((x, y, self.z, 1.0))
@@ -95,6 +85,7 @@ class _FrameProjector:
                 self.half_h + self.half_h * co.y / co.w)
 
     def segments(self, segs):
+        """Flat list of 3D pixel coordinates for a LINES batch; skips segments behind the viewer."""
         coords = []
         for a, b in segs:
             pa = self.point(*a)
@@ -106,6 +97,7 @@ class _FrameProjector:
         return coords
 
     def triangles(self, quads):
+        """Flat list of 3D pixel coordinates for a TRIS batch (two triangles per quad)."""
         coords = []
         for quad in quads:
             pts = [self.point(*p) for p in quad]
@@ -182,23 +174,12 @@ def build_layers(settings, aspect, scene):
     return layers
 
 
-def _draw_lines(shader, coords, color, width, viewport, poly):
-    if not coords:
-        return
-    batch = batch_for_shader(shader, 'LINES', {"pos": coords})
-    shader.bind()
-    shader.uniform_float("color", color)
-    if poly:
-        shader.uniform_float("viewportSize", viewport)
-        shader.uniform_float("lineWidth", width)
-    batch.draw(shader)
-
-
 def draw_callback():
+    """POST_PIXEL handler: draw every enabled guide over the 3D viewport."""
     context = bpy.context
     scene = context.scene
-    settings = getattr(scene, "composition_guides", None)
-    if settings is None or not settings.enabled:
+    settings = scene.composition_guides
+    if not settings.enabled:
         return
     region = context.region
     rv3d = context.region_data
@@ -210,22 +191,13 @@ def draw_callback():
     if cam is None:
         return
 
-    try:
-        proj = _FrameProjector(scene, cam, region, rv3d)
-    except (AttributeError, ValueError, ZeroDivisionError):
-        return
-
+    proj = _FrameProjector(scene, cam, region, rv3d)
     layers = build_layers(settings, proj.aspect, scene)
     if not layers:
         return
 
-    line_shader = _line_shader()
-    flat_shader = _flat_shader()
-    if flat_shader is None:
-        return
-    poly = line_shader is not None
-    if not poly:
-        line_shader = flat_shader
+    line_shader = _shader("POLYLINE_UNIFORM_COLOR")
+    flat_shader = _shader("UNIFORM_COLOR")
 
     ui_scale = context.preferences.system.ui_scale
     width = settings.line_width * ui_scale
@@ -239,50 +211,43 @@ def draw_callback():
             c = settings.color
         return (c[0], c[1], c[2], c[3] * opacity)
 
-    flat_2d = _flat_is_2d()
-    batches = []
+    # One line batch per guide, reused for the shadow and the line pass.
+    lines = []
+    fills = []
     for gid, segs, quads in layers:
         coords = proj.segments(segs)
+        if coords:
+            lines.append((color_for(gid), batch_for_shader(line_shader, 'LINES', {"pos": coords})))
         tris = proj.triangles(quads)
-        if flat_2d:
-            tris = [(x, y) for x, y, _z in tris]
-            if not poly:
-                coords = [(x, y) for x, y, _z in coords]
-        batches.append((color_for(gid), coords, tris))
+        if tris:
+            fills.append(batch_for_shader(flat_shader, 'TRIS', {"pos": tris}))
 
     gpu.state.blend_set('ALPHA')
 
     # Dimmed areas (crop mask)
-    dim = settings.crop_dim * opacity
-    for _color, _coords, tris in batches:
-        if tris:
-            batch = batch_for_shader(flat_shader, 'TRIS', {"pos": tris})
-            flat_shader.bind()
-            flat_shader.uniform_float("color", (0.0, 0.0, 0.0, dim))
+    if fills:
+        flat_shader.bind()
+        flat_shader.uniform_float("color", (0.0, 0.0, 0.0, settings.crop_dim * opacity))
+        for batch in fills:
             batch.draw(flat_shader)
 
-    if not poly:
-        gpu.state.line_width_set(width)
-
+    line_shader.bind()
+    line_shader.uniform_float("viewportSize", viewport)
     if settings.shadow:
-        shadow_w = width + 2.0 * ui_scale
-        if not poly:
-            gpu.state.line_width_set(shadow_w)
-        for color, coords, _tris in batches:
-            _draw_lines(line_shader, coords, _SHADOW + (color[3] * 0.45,),
-                        shadow_w, viewport, poly)
-        if not poly:
-            gpu.state.line_width_set(width)
+        line_shader.uniform_float("lineWidth", width + 2.0 * ui_scale)
+        for color, batch in lines:
+            line_shader.uniform_float("color", _SHADOW + (color[3] * 0.45,))
+            batch.draw(line_shader)
+    line_shader.uniform_float("lineWidth", width)
+    for color, batch in lines:
+        line_shader.uniform_float("color", color)
+        batch.draw(line_shader)
 
-    for color, coords, _tris in batches:
-        _draw_lines(line_shader, coords, color, width, viewport, poly)
-
-    if not poly:
-        gpu.state.line_width_set(1.0)
     gpu.state.blend_set('NONE')
 
 
 def register():
+    """Add the draw handler once; it lives on the SpaceView3D type, not on file data."""
     global _handle
     if _handle is None:
         _handle = bpy.types.SpaceView3D.draw_handler_add(

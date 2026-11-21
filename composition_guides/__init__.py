@@ -1,16 +1,17 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
+"""
+Composition Guides: camera-fitted composition guides in the 3D viewport.
 
-bl_info = {
-    "name": "Composition Guides",
-    "author": "Matteo Fontana",
-    "version": (1, 0, 0),
-    "blender": (3, 6, 0),
-    "location": "3D Viewport > Sidebar (N) > Composition, and viewport header",
-    "description": "Camera-fitted composition guides (thirds, phi, golden triangle, "
-                   "dynamic symmetry, Fibonacci spiral...) for every render engine",
-    "category": "3D View",
-}
+Add-on metadata lives in blender_manifest.toml (Blender extension format).
+Modules:
+    geometry    pure-math guide shapes in normalized frame space (no bpy)
+    properties  settings stored on each Scene (scene.composition_guides)
+    draw        viewport draw handler: camera frame projection + GPU drawing
+    ui          sidebar panels, header popover, operators, preferences
+"""
 
+# On "Reload Scripts" Blender reloads this package; reload the submodules too
+# so code changes are picked up without restarting.
 if "bpy" in locals():
     import importlib
     importlib.reload(geometry)
@@ -18,10 +19,11 @@ if "bpy" in locals():
     importlib.reload(draw)
     importlib.reload(ui)
 
-import bpy  # noqa: E402,F401
+import bpy  # noqa: E402,F401  (marks the module as loaded for the reload check)
 
 from . import geometry, properties, draw, ui  # noqa: E402
 
+# Registration order: settings first (panels and drawing read them), drawing last.
 _modules = (properties, ui, draw)
 
 
