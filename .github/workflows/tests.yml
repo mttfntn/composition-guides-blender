@@ -1,0 +1,52 @@
+name: Tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+  workflow_call:      # reused by release.yml
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: Blender 5.3
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Math tests (plain Python)
+        run: python3 tests/test_geometry.py
+
+      - name: Cache Blender download
+        uses: actions/cache@v4
+        with:
+          path: ~/blender-download
+          key: blender-5.3.0-linux-x64-tarball
+
+      - name: Get Blender 5.3.0
+        run: bash .github/scripts/get-blender.sh ~/blender-download ~/blender
+
+      - name: System libraries Blender needs (even headless)
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq libxi6 libxxf86vm1 libxfixes3 libxrender1 \
+            libxkbcommon0 libsm6 libgl1 libegl1 libglu1-mesa > /dev/null
+
+      - name: Blender tests
+        run: ~/blender/blender --background --factory-startup --python tests/test_blender.py
+
+      - name: Build and validate package
+        run: |
+          python3 build.py
+          ~/blender/blender --factory-startup --command extension validate dist/*.zip
+
+      - name: Upload package
+        uses: actions/upload-artifact@v4
+        with:
+          name: composition_guides
+          path: dist/*.zip
+          retention-days: 3
