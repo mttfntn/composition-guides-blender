@@ -1,6 +1,6 @@
 # AGENTS.md: Composition Guides (Blender add-on)
 
-Viewport overlay add-on: composition guides fitted to the camera frame. Blender **5.3 only**. Extension format. Python. GPL-3.0-or-later. Not a fork. Repo is private: `github.com/mttfntn/composition-guides-blender`, branch `main`.
+Viewport overlay add-on: composition guides fitted to the camera frame. Blender **5.3 only**. Extension format. Python. GPL-3.0-or-later. Not a fork. Public repo: `github.com/mttfntn/composition-guides-blender`, branch `main`.
 
 ## Commands
 ```

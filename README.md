@@ -1,10 +1,10 @@
 # Composition Guides for Blender
 
-[![Blender](https://img.shields.io/badge/Blender-5.3-E87D0D?logo=blender&logoColor=white)](https://www.blender.org/download/)
-[![Release](https://img.shields.io/badge/release-v1.0.0-blue)](https://github.com/mttfntn/composition-guides-blender/releases/latest)
+[![Blender](https://img.shields.io/badge/dynamic/toml?url=https%3A%2F%2Fraw.githubusercontent.com%2Fmttfntn%2Fcomposition-guides-blender%2Fmain%2Fcomposition_guides%2Fblender_manifest.toml&query=%24.blender_version_min&label=Blender&color=E87D0D&logo=blender&logoColor=white)](https://www.blender.org/download/)
+[![Release](https://img.shields.io/github/v/release/mttfntn/composition-guides-blender)](https://github.com/mttfntn/composition-guides-blender/releases/latest)
 [![Tests](https://github.com/mttfntn/composition-guides-blender/actions/workflows/tests.yml/badge.svg)](https://github.com/mttfntn/composition-guides-blender/actions/workflows/tests.yml)
-[![License](https://img.shields.io/badge/license-GPL--3.0--or--later-green)](LICENSE)
-[![Python](https://img.shields.io/badge/language-Python-3776AB?logo=python&logoColor=white)](composition_guides)
+[![License](https://img.shields.io/github/license/mttfntn/composition-guides-blender)](LICENSE)
+[![Language](https://img.shields.io/github/languages/top/mttfntn/composition-guides-blender)](https://github.com/mttfntn/composition-guides-blender)
 
 Composition guides fitted to your camera frame, shown in the 3D viewport and switched on and off from a panel.
 

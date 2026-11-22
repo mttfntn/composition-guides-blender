@@ -5,7 +5,7 @@ A Blender add-on (extension format) that draws composition guides inside the cam
 
 It's an overlay drawn with Blender's `gpu` module, so it works with every render engine, including Octane, and never appears in renders.
 
-- Repository: https://github.com/mttfntn/composition-guides-blender (private)
+- Repository: https://github.com/mttfntn/composition-guides-blender (public)
 - Author: Matteo Fontana. License: GPL-3.0-or-later.
 - Not a fork, so there is no upstream to merge from.
 
@@ -77,7 +77,7 @@ blender --command extension install-file -r user_default -e dist/composition_gui
 Run the install with the scratch environment variables set.
 
 ## How to make a release
-1. Update `version` in `composition_guides/blender_manifest.toml`, and the release badge in `README.md` (the repo is private, so the badge is static).
+1. Update `version` in `composition_guides/blender_manifest.toml`. The README badges read the release and the manifest, so they update themselves.
 2. Commit and push to `main`, then wait for the **Tests** workflow to pass.
 3. Create an **annotated** tag whose message is the release notes, and push it:
    ```
